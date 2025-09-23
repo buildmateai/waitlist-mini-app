@@ -12,7 +12,11 @@ export class Database {
   }
 
   static getDebate(id: string): Debate | null {
-    return debates.find(debate => debate.id === id) || null;
+    console.log('Database: Looking for debate with ID:', id);
+    console.log('Database: Available debates:', debates.map(d => d.id));
+    const found = debates.find(debate => debate.id === id);
+    console.log('Database: Found debate:', found ? 'Yes' : 'No');
+    return found || null;
   }
 
   static getActiveDebates(): Debate[] {
@@ -27,7 +31,10 @@ export class Database {
 
   static createDebate(debate: Debate): boolean {
     try {
+      console.log('Database: Adding debate to array:', debate.id);
       debates.push(debate);
+      console.log('Database: Total debates now:', debates.length);
+      console.log('Database: All debate IDs:', debates.map(d => d.id));
       return true;
     } catch (error) {
       console.error('Error creating debate:', error);

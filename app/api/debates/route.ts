@@ -62,10 +62,16 @@ export async function POST(request: NextRequest) {
       chat: []
     };
 
+    console.log('Creating debate:', debate.title, 'with ID:', debate.id);
+    
     const success = Database.createDebate(debate);
+    console.log('Debate creation success:', success);
+    
     if (success) {
+      console.log('Debate created successfully, returning:', debate.id);
       return NextResponse.json(debate, { status: 201 });
     } else {
+      console.log('Failed to create debate');
       return NextResponse.json({ error: 'Failed to create debate' }, { status: 500 });
     }
   } catch (error) {

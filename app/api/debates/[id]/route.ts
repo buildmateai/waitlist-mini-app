@@ -7,10 +7,17 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+    console.log('Fetching debate with ID:', id);
+    
     const debate = Database.getDebate(id);
+    console.log('Found debate:', debate ? 'Yes' : 'No');
+    
     if (!debate) {
+      console.log('Debate not found for ID:', id);
       return NextResponse.json({ error: 'Debate not found' }, { status: 404 });
     }
+    
+    console.log('Returning debate:', debate.title);
     return NextResponse.json(debate);
   } catch (error) {
     console.error('Error fetching debate:', error);
