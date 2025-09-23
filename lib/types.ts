@@ -26,6 +26,11 @@ export interface ChatMessage {
   message: string;
   timestamp: number;
   avatar?: string;
+  reactions: {
+    upvotes: number;
+    downvotes: number;
+    users: string[]; // List of user IDs who reacted
+  };
 }
 
 export interface User {

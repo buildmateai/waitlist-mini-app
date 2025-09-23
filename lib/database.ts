@@ -109,7 +109,12 @@ export class Database {
         debateId,
         author,
         message,
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        reactions: {
+          upvotes: 0,
+          downvotes: 0,
+          users: []
+        }
       };
 
       debate.chat.push(chatMessage);
@@ -123,6 +128,69 @@ export class Database {
   static getChatMessages(debateId: string): ChatMessage[] {
     const debate = debates.find(d => d.id === debateId);
     return debate ? debate.chat : [];
+  }
+
+  // Reaction functionality
+  static addReactionToMessage(debateId: string, messageId: string, userId: string, reactionType: 'upvote' | 'downvote'): boolean {
+    try {
+      const debate = debates.find(d => d.id === debateId);
+      if (!debate) return false;
+
+      const messageIndex = debate.chat.findIndex(msg => msg.id === messageId);
+      if (messageIndex === -1) return false;
+
+      const message = debate.chat[messageIndex];
+
+      // Check if user already reacted
+      if (message.reactions.users.includes(userId)) {
+        // Remove existing reaction
+        const userReactionIndex = message.reactions.users.indexOf(userId);
+        message.reactions.users.splice(userReactionIndex, 1);
+        
+        // Decrease the previous reaction count
+        if (reactionType === 'upvote') {
+          message.reactions.upvotes = Math.max(0, message.reactions.upvotes - 1);
+        } else {
+          message.reactions.downvotes = Math.max(0, message.reactions.downvotes - 1);
+        }
+        
+        return true;
+      }
+
+      // Add new reaction
+      message.reactions.users.push(userId);
+      if (reactionType === 'upvote') {
+        message.reactions.upvotes++;
+      } else {
+        message.reactions.downvotes++;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error adding reaction to message:', error);
+      return false;
+    }
+  }
+
+  static getUserReaction(debateId: string, messageId: string, userId: string): 'upvote' | 'downvote' | null {
+    try {
+      const debate = debates.find(d => d.id === debateId);
+      if (!debate) return null;
+
+      const message = debate.chat.find(msg => msg.id === messageId);
+      if (!message) return null;
+
+      if (!message.reactions.users.includes(userId)) {
+        return null;
+      }
+
+      // Simple logic: if user reacted, we'll determine type based on current counts
+      // In a real app, you'd store the reaction type per user
+      return null; // For now, we'll just track if user reacted
+    } catch (error) {
+      console.error('Error getting user reaction:', error);
+      return null;
+    }
   }
 
   // Helper function to check if a debate is active

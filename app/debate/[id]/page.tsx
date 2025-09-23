@@ -173,6 +173,28 @@ export default function DebateDetailPage() {
     }
   };
 
+  const handleReaction = async (messageId: string, reactionType: 'upvote' | 'downvote') => {
+    try {
+      const response = await fetch(`/api/debates/${debateId}/messages/${messageId}/reactions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: 'user123', // TODO: Get from Farcaster context
+          reactionType
+        }),
+      });
+
+      if (response.ok) {
+        const updatedMessages = await response.json();
+        setChatMessages(updatedMessages);
+      }
+    } catch (error) {
+      console.error('Error adding reaction:', error);
+    }
+  };
+
   const scrollToBottom = () => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -350,6 +372,22 @@ export default function DebateDetailPage() {
                     </span>
                   </div>
                   <div className={styles.messageContent}>{message.message}</div>
+                  <div className={styles.messageReactions}>
+                    <button 
+                      className={styles.reactionButton}
+                      onClick={() => handleReaction(message.id, 'upvote')}
+                      title="Upvote"
+                    >
+                      👍 {message.reactions.upvotes}
+                    </button>
+                    <button 
+                      className={styles.reactionButton}
+                      onClick={() => handleReaction(message.id, 'downvote')}
+                      title="Downvote"
+                    >
+                      👎 {message.reactions.downvotes}
+                    </button>
+                  </div>
                 </div>
               ))}
               <div ref={chatEndRef} />
