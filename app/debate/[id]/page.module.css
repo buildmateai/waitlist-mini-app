@@ -1,0 +1,362 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+  color: white;
+  position: relative;
+}
+
+.backButton {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+  z-index: 10;
+}
+
+.backButton:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+  gap: 2rem;
+}
+
+.loading, .error {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1.2rem;
+  padding: 3rem;
+}
+
+.error {
+  color: #ff6b6b;
+}
+
+/* Debate Header */
+.debateHeader {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.debateTitle {
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 700;
+  margin-bottom: 1rem;
+  background: linear-gradient(135deg, #ffffff 0%, #e0e0e0 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1.2;
+}
+
+.debateMeta {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.9rem;
+}
+
+.author, .createdAt {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Description */
+.debateDescription {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  padding: 2rem;
+  backdrop-filter: blur(10px);
+}
+
+.debateDescription h3 {
+  margin: 0 0 1rem 0;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.3rem;
+}
+
+.debateDescription p {
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.6;
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+/* Timer Section */
+.timerSection {
+  background: rgba(255, 193, 7, 0.1);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  border-radius: 16px;
+  padding: 2rem;
+  text-align: center;
+}
+
+.timerSection h3 {
+  margin: 0 0 1.5rem 0;
+  color: #ffc107;
+  font-size: 1.3rem;
+}
+
+.timer {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin-bottom: 1rem;
+}
+
+.timerUnit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 80px;
+}
+
+.timerValue {
+  font-size: 3rem;
+  font-weight: 700;
+  color: #ffc107;
+  line-height: 1;
+}
+
+.timerLabel {
+  font-size: 0.9rem;
+  color: rgba(255, 193, 7, 0.8);
+  margin-top: 0.5rem;
+}
+
+.timerEnded {
+  font-size: 1.5rem;
+  color: #ff6b6b;
+  font-weight: 600;
+}
+
+/* Voting Section */
+.votingSection {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  padding: 2rem;
+  text-align: center;
+}
+
+.votingSection h3 {
+  margin: 0 0 1.5rem 0;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.3rem;
+}
+
+.voteButtons {
+  display: flex;
+  gap: 2rem;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.voteButton {
+  padding: 1.5rem 3rem;
+  border: none;
+  border-radius: 16px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 150px;
+}
+
+.yesButton {
+  background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+  color: white;
+  box-shadow: 0 4px 20px rgba(76, 175, 80, 0.3);
+}
+
+.yesButton:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 25px rgba(76, 175, 80, 0.4);
+}
+
+.noButton {
+  background: linear-gradient(135deg, #f44336 0%, #da190b 100%);
+  color: white;
+  box-shadow: 0 4px 20px rgba(244, 67, 54, 0.3);
+}
+
+.noButton:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 25px rgba(244, 67, 54, 0.4);
+}
+
+.voted {
+  color: #4caf50;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.votingEnded {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1.1rem;
+}
+
+/* Results Section */
+.resultsSection {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  padding: 2rem;
+}
+
+.resultsSection h3 {
+  margin: 0 0 1.5rem 0;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.3rem;
+  text-align: center;
+}
+
+.results {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.resultItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.resultHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.resultLabel {
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.resultCount {
+  font-weight: 700;
+  font-size: 1.2rem;
+}
+
+.progressBar {
+  width: 100%;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  transition: width 0.5s ease;
+}
+
+.yesProgress {
+  background: linear-gradient(90deg, #4caf50 0%, #45a049 100%);
+}
+
+.noProgress {
+  background: linear-gradient(90deg, #f44336 0%, #da190b 100%);
+}
+
+.percentage {
+  text-align: right;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.totalVotes {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Winner Section */
+.winnerSection {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 193, 7, 0.1) 100%);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  border-radius: 16px;
+  padding: 2rem;
+  text-align: center;
+}
+
+.winnerSection h3 {
+  margin: 0 0 1.5rem 0;
+  color: #ffd700;
+  font-size: 1.5rem;
+}
+
+.winnerResult {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.winnerEmoji {
+  font-size: 4rem;
+}
+
+.winnerText {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #ffd700;
+}
+
+.winnerSubtext {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1.1rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .content {
+    padding: 1rem;
+    gap: 1.5rem;
+  }
+  
+  .timer {
+    gap: 1rem;
+  }
+  
+  .timerValue {
+    font-size: 2rem;
+  }
+  
+  .voteButtons {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .voteButton {
+    padding: 1rem 2rem;
+    font-size: 1rem;
+  }
+  
+  .debateMeta {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}

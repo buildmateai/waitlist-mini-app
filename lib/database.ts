@@ -79,6 +79,11 @@ export class Database {
 
       const debate = debates[debateIndex];
       
+      // Check if debate is still active
+      if (debate.status !== 'active' || debate.endsAt <= Date.now()) {
+        return false;
+      }
+      
       // Check if user already voted
       if (debate.votes.voters.includes(voterId)) return false;
 
