@@ -33,7 +33,10 @@ export async function POST(
     const body = await request.json();
     const { voterId, option } = body;
 
+    console.log('Vote POST request:', { body, params });
+
     if (!voterId || !option) {
+      console.log('Missing fields:', { voterId: !!voterId, option: !!option });
       return NextResponse.json(
         { error: 'Missing required fields: voterId, option' },
         { status: 400 }
@@ -41,11 +44,17 @@ export async function POST(
     }
 
     const { id } = await params;
+    console.log('Voting on debate:', id, 'option:', option, 'voter:', voterId);
+    
     const success = Database.voteDebate(id, voterId, option);
+    console.log('Vote successful:', success);
+    
     if (success) {
       const updatedDebate = Database.getDebate(id);
+      console.log('Returning updated debate:', updatedDebate?.title);
       return NextResponse.json(updatedDebate);
     } else {
+      console.log('Vote failed - user already voted or debate not active');
       return NextResponse.json({ error: 'Failed to vote or already voted' }, { status: 400 });
     }
   } catch (error) {

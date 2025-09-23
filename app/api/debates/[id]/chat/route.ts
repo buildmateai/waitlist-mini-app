@@ -23,7 +23,10 @@ export async function POST(
     const body = await request.json();
     const { author, message } = body;
 
+    console.log('Chat POST request:', { body, params });
+
     if (!author || !message) {
+      console.log('Missing fields:', { author: !!author, message: !!message });
       return NextResponse.json(
         { error: 'Missing required fields: author, message' },
         { status: 400 }
@@ -31,11 +34,17 @@ export async function POST(
     }
 
     const { id } = await params;
+    console.log('Adding chat message to debate:', id);
+    
     const success = Database.addChatMessage(id, author, message);
+    console.log('Chat message added successfully:', success);
+    
     if (success) {
       const updatedMessages = Database.getChatMessages(id);
+      console.log('Returning updated messages:', updatedMessages.length);
       return NextResponse.json(updatedMessages);
     } else {
+      console.log('Failed to add chat message');
       return NextResponse.json({ error: 'Failed to add chat message' }, { status: 500 });
     }
   } catch (error) {

@@ -127,7 +127,17 @@ export class Database {
 
   static getChatMessages(debateId: string): ChatMessage[] {
     const debate = debates.find(d => d.id === debateId);
-    return debate ? debate.chat : [];
+    if (!debate) return [];
+    
+    // Ensure all messages have reactions structure for backward compatibility
+    return debate.chat.map(message => ({
+      ...message,
+      reactions: message.reactions || {
+        upvotes: 0,
+        downvotes: 0,
+        users: []
+      }
+    }));
   }
 
   // Reaction functionality
@@ -140,6 +150,15 @@ export class Database {
       if (messageIndex === -1) return false;
 
       const message = debate.chat[messageIndex];
+      
+      // Ensure message has reactions structure for backward compatibility
+      if (!message.reactions) {
+        message.reactions = {
+          upvotes: 0,
+          downvotes: 0,
+          users: []
+        };
+      }
 
       // Check if user already reacted
       if (message.reactions.users.includes(userId)) {
@@ -179,6 +198,11 @@ export class Database {
 
       const message = debate.chat.find(msg => msg.id === messageId);
       if (!message) return null;
+
+      // Ensure message has reactions structure for backward compatibility
+      if (!message.reactions) {
+        return null;
+      }
 
       if (!message.reactions.users.includes(userId)) {
         return null;
