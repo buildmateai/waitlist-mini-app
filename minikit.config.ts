@@ -27,10 +27,13 @@ export const minikitConfig = {
     primaryCategory: "social",
     tags: ["marketing", "ads", "quickstart", "waitlist"],
     heroImageUrl: `${ROOT_URL}/blue-hero.png`, 
-    tagline: "",
-    ogTitle: "",
-    ogDescription: "",
+    tagline: "Revolutionary AI-powered marketing for the onchain future",
+    ogTitle: "Cubey - Your AI Ad Companion",
+    ogDescription: "Get early access to revolutionary AI-powered marketing tools for the onchain future",
     ogImageUrl: `${ROOT_URL}/blue-hero.png`,
+    buttonTitle: "Join Waitlist",
+    noindex: false,
+    castShareUrl: `${ROOT_URL}/success`,
   },
 } as const;
 
