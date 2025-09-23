@@ -59,7 +59,7 @@ export default function Home() {
       
       <div className={styles.content}>
         <div className={styles.waitlistForm}>
-          <h1 className={styles.title}>Join {minikitConfig.frame.name.toUpperCase()}</h1>
+          <h1 className={styles.title}>Join {minikitConfig.miniapp.name.toUpperCase()}</h1>
           
           <p className={styles.subtitle}>
             Get early access and be the first to experience the future of<br />
