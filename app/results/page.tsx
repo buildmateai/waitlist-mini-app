@@ -43,8 +43,10 @@ export default function ResultsPage() {
   };
 
   const getWinner = (debate: Debate) => {
-    if (debate.votes.yes > debate.votes.no) return 'yes';
-    if (debate.votes.no > debate.votes.yes) return 'no';
+    const option1Votes = debate.votes[debate.votingOptions.option1] as number || 0;
+    const option2Votes = debate.votes[debate.votingOptions.option2] as number || 0;
+    if (option1Votes > option2Votes) return debate.votingOptions.option1;
+    if (option2Votes > option1Votes) return debate.votingOptions.option2;
     return 'tie';
   };
 
@@ -54,7 +56,9 @@ export default function ResultsPage() {
   };
 
   const getTotalVotes = (debate: Debate) => {
-    return debate.votes.yes + debate.votes.no;
+    const option1Votes = debate.votes[debate.votingOptions.option1] as number || 0;
+    const option2Votes = debate.votes[debate.votingOptions.option2] as number || 0;
+    return option1Votes + option2Votes;
   };
 
   const getMostPopularDebates = () => {
@@ -215,31 +219,31 @@ export default function ResultsPage() {
                       <div className={styles.debateResults}>
                         <div className={styles.resultRow}>
                           <div className={styles.resultLabel}>
-                            <span className={styles.yesEmoji}>👍</span> YES
+                            <span className={styles.option1Emoji}>🏆</span> {debate.votingOptions.option1}
                           </div>
                           <div className={styles.resultBar}>
                             <div 
-                              className={`${styles.resultProgress} ${styles.yesProgress}`}
-                              style={{ width: `${getVotePercentage(debate.votes.yes, totalVotes)}%` }}
+                              className={`${styles.resultProgress} ${styles.option1Progress}`}
+                              style={{ width: `${getVotePercentage(debate.votes[debate.votingOptions.option1] as number || 0, totalVotes)}%` }}
                             ></div>
                           </div>
                           <div className={styles.resultStats}>
-                            {debate.votes.yes} ({getVotePercentage(debate.votes.yes, totalVotes)}%)
+                            {debate.votes[debate.votingOptions.option1] as number || 0} ({getVotePercentage(debate.votes[debate.votingOptions.option1] as number || 0, totalVotes)}%)
                           </div>
                         </div>
                         
                         <div className={styles.resultRow}>
                           <div className={styles.resultLabel}>
-                            <span className={styles.noEmoji}>👎</span> NO
+                            <span className={styles.option2Emoji}>🏆</span> {debate.votingOptions.option2}
                           </div>
                           <div className={styles.resultBar}>
                             <div 
-                              className={`${styles.resultProgress} ${styles.noProgress}`}
-                              style={{ width: `${getVotePercentage(debate.votes.no, totalVotes)}%` }}
+                              className={`${styles.resultProgress} ${styles.option2Progress}`}
+                              style={{ width: `${getVotePercentage(debate.votes[debate.votingOptions.option2] as number || 0, totalVotes)}%` }}
                             ></div>
                           </div>
                           <div className={styles.resultStats}>
-                            {debate.votes.no} ({getVotePercentage(debate.votes.no, totalVotes)}%)
+                            {debate.votes[debate.votingOptions.option2] as number || 0} ({getVotePercentage(debate.votes[debate.votingOptions.option2] as number || 0, totalVotes)}%)
                           </div>
                         </div>
 

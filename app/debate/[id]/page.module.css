@@ -181,24 +181,24 @@
   min-width: 150px;
 }
 
-.yesButton {
+.option1Button {
   background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
   color: white;
   box-shadow: 0 4px 20px rgba(76, 175, 80, 0.3);
 }
 
-.yesButton:hover {
+.option1Button:hover {
   transform: translateY(-3px);
   box-shadow: 0 6px 25px rgba(76, 175, 80, 0.4);
 }
 
-.noButton {
+.option2Button {
   background: linear-gradient(135deg, #f44336 0%, #da190b 100%);
   color: white;
   box-shadow: 0 4px 20px rgba(244, 67, 54, 0.3);
 }
 
-.noButton:hover {
+.option2Button:hover {
   transform: translateY(-3px);
   box-shadow: 0 6px 25px rgba(244, 67, 54, 0.4);
 }
@@ -271,11 +271,11 @@
   transition: width 0.5s ease;
 }
 
-.yesProgress {
+.option1Progress {
   background: linear-gradient(90deg, #4caf50 0%, #45a049 100%);
 }
 
-.noProgress {
+.option2Progress {
   background: linear-gradient(90deg, #f44336 0%, #da190b 100%);
 }
 
@@ -359,4 +359,125 @@
     flex-direction: column;
     gap: 0.5rem;
   }
+
+  .chatContainer {
+    height: 300px;
+  }
+
+  .chatForm {
+    flex-direction: column;
+  }
+
+  .chatSendButton {
+    min-width: 100%;
+  }
+}
+
+/* Chat Section */
+.chatSection {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 2rem;
+  backdrop-filter: blur(10px);
+}
+
+.chatSection h3 {
+  margin: 0 0 1.5rem 0;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.3rem;
+}
+
+.chatContainer {
+  display: flex;
+  flex-direction: column;
+  height: 400px;
+}
+
+.chatMessages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  margin-bottom: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.chatMessage {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  border-left: 3px solid #4caf50;
+}
+
+.messageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.messageAuthor {
+  color: #4caf50;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.messageTime {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.8rem;
+}
+
+.messageContent {
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.4;
+}
+
+.chatForm {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.chatInput {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: white;
+  font-size: 1rem;
+}
+
+.chatInput::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.chatInput:focus {
+  outline: none;
+  border-color: #4caf50;
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+}
+
+.chatSendButton {
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #4caf50, #45a049);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 80px;
+}
+
+.chatSendButton:hover:not(:disabled) {
+  background: linear-gradient(135deg, #45a049, #3d8b40);
+  transform: translateY(-1px);
+}
+
+.chatSendButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }

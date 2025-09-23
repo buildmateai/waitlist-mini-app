@@ -326,7 +326,7 @@
   color: rgba(255, 255, 255, 0.9);
 }
 
-.yesEmoji, .noEmoji {
+.option1Emoji, .option2Emoji {
   font-size: 1.1rem;
 }
 
@@ -343,11 +343,11 @@
   transition: width 0.5s ease;
 }
 
-.yesProgress {
+.option1Progress {
   background: linear-gradient(90deg, #4caf50 0%, #45a049 100%);
 }
 
-.noProgress {
+.option2Progress {
   background: linear-gradient(90deg, #f44336 0%, #da190b 100%);
 }
 

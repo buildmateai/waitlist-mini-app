@@ -1,7 +1,7 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Debate } from "../../../lib/types";
+import { Debate, ChatMessage } from "../../../lib/types";
 import styles from "./page.module.css";
 
 export default function DebateDetailPage() {
@@ -10,19 +10,24 @@ export default function DebateDetailPage() {
   const [debate, setDebate] = useState<Debate | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasVoted, setHasVoted] = useState(false);
-  const [userVote, setUserVote] = useState<'yes' | 'no' | null>(null);
+  const [userVote, setUserVote] = useState<string | null>(null);
   const [timeRemaining, setTimeRemaining] = useState<{
     hours: number;
     minutes: number;
     seconds: number;
     total: number;
   } | null>(null);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [newMessage, setNewMessage] = useState("");
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
 
   const debateId = params.id as string;
   const userId = 'user123'; // TODO: Get from Farcaster context
 
   useEffect(() => {
     fetchDebate();
+    fetchChatMessages();
   }, [debateId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -91,7 +96,7 @@ export default function DebateDetailPage() {
     }
   };
 
-  const handleVote = async (vote: 'yes' | 'no') => {
+  const handleVote = async (option: string) => {
     if (hasVoted || !debate || debate.status !== 'active') return;
 
     try {
@@ -102,7 +107,7 @@ export default function DebateDetailPage() {
         },
         body: JSON.stringify({
           voterId: userId,
-          vote: vote
+          option: option
         }),
       });
 
@@ -110,7 +115,7 @@ export default function DebateDetailPage() {
         const updatedDebate = await response.json();
         setDebate(updatedDebate);
         setHasVoted(true);
-        setUserVote(vote);
+        setUserVote(option);
       } else {
         console.error('Failed to vote');
       }
@@ -123,6 +128,58 @@ export default function DebateDetailPage() {
     if (total === 0) return 0;
     return Math.round((votes / total) * 100);
   };
+
+  const fetchChatMessages = async () => {
+    if (!debateId) return;
+    
+    try {
+      const response = await fetch(`/api/debates/${debateId}/chat`);
+      if (response.ok) {
+        const messages = await response.json();
+        setChatMessages(messages);
+      }
+    } catch (error) {
+      console.error('Error fetching chat messages:', error);
+    }
+  };
+
+  const sendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMessage.trim() || !debateId || isSendingMessage) return;
+
+    setIsSendingMessage(true);
+    try {
+      const response = await fetch(`/api/debates/${debateId}/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          author: 'user123', // TODO: Get from Farcaster context
+          message: newMessage.trim()
+        }),
+      });
+
+      if (response.ok) {
+        const updatedMessages = await response.json();
+        setChatMessages(updatedMessages);
+        setNewMessage("");
+        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+    } finally {
+      setIsSendingMessage(false);
+    }
+  };
+
+  const scrollToBottom = () => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [chatMessages]);
 
   if (isLoading) {
     return (
@@ -144,7 +201,13 @@ export default function DebateDetailPage() {
     );
   }
 
-  const totalVotes = debate.votes.yes + debate.votes.no;
+  const getTotalVotes = (debate: Debate) => {
+    const option1Votes = debate.votes[debate.votingOptions.option1] as number || 0;
+    const option2Votes = debate.votes[debate.votingOptions.option2] as number || 0;
+    return option1Votes + option2Votes;
+  };
+  
+  const totalVotes = getTotalVotes(debate);
   const isEnded = debate.status === 'ended' || (timeRemaining?.total || 0) <= 0;
 
   return (
@@ -210,22 +273,22 @@ export default function DebateDetailPage() {
             <div className={styles.voted}>
               <p>✅ You have already voted!</p>
               {userVote && (
-                <p>Your vote: <strong>{userVote === 'yes' ? 'YES' : 'NO'}</strong></p>
+                <p>Your vote: <strong>{userVote}</strong></p>
               )}
             </div>
           ) : (
             <div className={styles.voteButtons}>
               <button
-                className={`${styles.voteButton} ${styles.yesButton}`}
-                onClick={() => handleVote('yes')}
+                className={`${styles.voteButton} ${styles.option1Button}`}
+                onClick={() => handleVote(debate.votingOptions.option1)}
               >
-                👍 YES
+                {debate.votingOptions.option1}
               </button>
               <button
-                className={`${styles.voteButton} ${styles.noButton}`}
-                onClick={() => handleVote('no')}
+                className={`${styles.voteButton} ${styles.option2Button}`}
+                onClick={() => handleVote(debate.votingOptions.option2)}
               >
-                👎 NO
+                {debate.votingOptions.option2}
               </button>
             </div>
           )}
@@ -237,33 +300,33 @@ export default function DebateDetailPage() {
           <div className={styles.results}>
             <div className={styles.resultItem}>
               <div className={styles.resultHeader}>
-                <span className={styles.resultLabel}>👍 YES</span>
-                <span className={styles.resultCount}>{debate.votes.yes}</span>
+                <span className={styles.resultLabel}>{debate.votingOptions.option1}</span>
+                <span className={styles.resultCount}>{debate.votes[debate.votingOptions.option1] as number || 0}</span>
               </div>
               <div className={styles.progressBar}>
                 <div 
-                  className={`${styles.progressFill} ${styles.yesProgress}`}
-                  style={{ width: `${getVotePercentage(debate.votes.yes, totalVotes)}%` }}
+                  className={`${styles.progressFill} ${styles.option1Progress}`}
+                  style={{ width: `${getVotePercentage(debate.votes[debate.votingOptions.option1] as number || 0, totalVotes)}%` }}
                 ></div>
               </div>
               <div className={styles.percentage}>
-                {getVotePercentage(debate.votes.yes, totalVotes)}%
+                {getVotePercentage(debate.votes[debate.votingOptions.option1] as number || 0, totalVotes)}%
               </div>
             </div>
 
             <div className={styles.resultItem}>
               <div className={styles.resultHeader}>
-                <span className={styles.resultLabel}>👎 NO</span>
-                <span className={styles.resultCount}>{debate.votes.no}</span>
+                <span className={styles.resultLabel}>{debate.votingOptions.option2}</span>
+                <span className={styles.resultCount}>{debate.votes[debate.votingOptions.option2] as number || 0}</span>
               </div>
               <div className={styles.progressBar}>
                 <div 
-                  className={`${styles.progressFill} ${styles.noProgress}`}
-                  style={{ width: `${getVotePercentage(debate.votes.no, totalVotes)}%` }}
+                  className={`${styles.progressFill} ${styles.option2Progress}`}
+                  style={{ width: `${getVotePercentage(debate.votes[debate.votingOptions.option2] as number || 0, totalVotes)}%` }}
                 ></div>
               </div>
               <div className={styles.percentage}>
-                {getVotePercentage(debate.votes.no, totalVotes)}%
+                {getVotePercentage(debate.votes[debate.votingOptions.option2] as number || 0, totalVotes)}%
               </div>
             </div>
           </div>
@@ -273,35 +336,85 @@ export default function DebateDetailPage() {
           </div>
         </div>
 
+        {/* Chat Section */}
+        <div className={styles.chatSection}>
+          <h3>💬 Discussion</h3>
+          <div className={styles.chatContainer}>
+            <div className={styles.chatMessages}>
+              {chatMessages.map((message) => (
+                <div key={message.id} className={styles.chatMessage}>
+                  <div className={styles.messageHeader}>
+                    <span className={styles.messageAuthor}>@{message.author}</span>
+                    <span className={styles.messageTime}>
+                      {new Date(message.timestamp).toLocaleTimeString()}
+                    </span>
+                  </div>
+                  <div className={styles.messageContent}>{message.message}</div>
+                </div>
+              ))}
+              <div ref={chatEndRef} />
+            </div>
+            
+            <form onSubmit={sendMessage} className={styles.chatForm}>
+              <input
+                type="text"
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                placeholder="Share your thoughts..."
+                className={styles.chatInput}
+                disabled={isSendingMessage}
+              />
+              <button 
+                type="submit" 
+                className={styles.chatSendButton}
+                disabled={!newMessage.trim() || isSendingMessage}
+              >
+                {isSendingMessage ? 'Sending...' : 'Send'}
+              </button>
+            </form>
+          </div>
+        </div>
+
         {isEnded && (
           <div className={styles.winnerSection}>
             <h3>🏆 Winner</h3>
             <div className={styles.winner}>
-              {debate.votes.yes > debate.votes.no ? (
-                <div className={styles.winnerResult}>
-                  <div className={styles.winnerEmoji}>👍</div>
-                  <div className={styles.winnerText}>YES wins!</div>
-                  <div className={styles.winnerSubtext}>
-                    {debate.votes.yes} vs {debate.votes.no} votes
-                  </div>
-                </div>
-              ) : debate.votes.no > debate.votes.yes ? (
-                <div className={styles.winnerResult}>
-                  <div className={styles.winnerEmoji}>👎</div>
-                  <div className={styles.winnerText}>NO wins!</div>
-                  <div className={styles.winnerSubtext}>
-                    {debate.votes.no} vs {debate.votes.yes} votes
-                  </div>
-                </div>
-              ) : (
-                <div className={styles.winnerResult}>
-                  <div className={styles.winnerEmoji}>🤝</div>
-                  <div className={styles.winnerText}>It&apos;s a tie!</div>
-                  <div className={styles.winnerSubtext}>
-                    {debate.votes.yes} vs {debate.votes.no} votes
-                  </div>
-                </div>
-              )}
+              {(() => {
+                const option1Votes = debate.votes[debate.votingOptions.option1] as number || 0;
+                const option2Votes = debate.votes[debate.votingOptions.option2] as number || 0;
+                
+                if (option1Votes > option2Votes) {
+                  return (
+                    <div className={styles.winnerResult}>
+                      <div className={styles.winnerEmoji}>🏆</div>
+                      <div className={styles.winnerText}>{debate.votingOptions.option1} wins!</div>
+                      <div className={styles.winnerSubtext}>
+                        {option1Votes} vs {option2Votes} votes
+                      </div>
+                    </div>
+                  );
+                } else if (option2Votes > option1Votes) {
+                  return (
+                    <div className={styles.winnerResult}>
+                      <div className={styles.winnerEmoji}>🏆</div>
+                      <div className={styles.winnerText}>{debate.votingOptions.option2} wins!</div>
+                      <div className={styles.winnerSubtext}>
+                        {option2Votes} vs {option1Votes} votes
+                      </div>
+                    </div>
+                  );
+                } else {
+                  return (
+                    <div className={styles.winnerResult}>
+                      <div className={styles.winnerEmoji}>🤝</div>
+                      <div className={styles.winnerText}>It&apos;s a tie!</div>
+                      <div className={styles.winnerSubtext}>
+                        {option1Votes} vs {option2Votes} votes
+                      </div>
+                    </div>
+                  );
+                }
+              })()}
             </div>
           </div>
         )}

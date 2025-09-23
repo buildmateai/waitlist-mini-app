@@ -67,7 +67,7 @@ export class Database {
 
       // Add vote
       debate.votes.voters.push(voterId);
-      debate.votes[option]++;
+      (debate.votes[option] as number)++;
 
       return true;
     } catch (error) {
