@@ -57,12 +57,20 @@ export default function Home() {
           <h1 className={styles.title}>🔥 DEBATE APP</h1>
           <p className={styles.subtitle}>Join debates, stake your opinion, win rewards</p>
           
-          <button 
-            onClick={() => setShowCreateForm(true)}
-            className={styles.createButton}
-          >
-            Create New Debate
-          </button>
+          <div className={styles.headerActions}>
+            <button 
+              onClick={() => setShowCreateForm(true)}
+              className={styles.createButton}
+            >
+              Create New Debate
+            </button>
+            <button 
+              onClick={() => window.location.href = '/results'}
+              className={styles.resultsButton}
+            >
+              📊 View Results
+            </button>
+          </div>
         </div>
 
         <div className={styles.debatesList}>

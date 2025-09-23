@@ -2,10 +2,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Database } from '../../../lib/database';
 import { Debate } from '../../../lib/types';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const activeDebates = Database.getActiveDebates();
-    return NextResponse.json(activeDebates);
+    const { searchParams } = new URL(request.url);
+    const includeAll = searchParams.get('all') === 'true';
+    
+    let debates;
+    if (includeAll) {
+      debates = Database.getDebates();
+    } else {
+      debates = Database.getActiveDebates();
+    }
+    
+    return NextResponse.json(debates);
   } catch (error) {
     console.error('Error fetching debates:', error);
     return NextResponse.json({ error: 'Failed to fetch debates' }, { status: 500 });
