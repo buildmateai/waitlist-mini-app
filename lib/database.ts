@@ -1,43 +1,21 @@
 import { Debate, User } from './types';
-import fs from 'fs';
-import path from 'path';
 
-const DATA_DIR = path.join(process.cwd(), 'data');
-const DEBATES_FILE = path.join(DATA_DIR, 'debates.json');
-const USERS_FILE = path.join(DATA_DIR, 'users.json');
-
-// Ensure data directory exists
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-}
-
-// Initialize files if they don't exist
-if (!fs.existsSync(DEBATES_FILE)) {
-  fs.writeFileSync(DEBATES_FILE, JSON.stringify([]));
-}
-if (!fs.existsSync(USERS_FILE)) {
-  fs.writeFileSync(USERS_FILE, JSON.stringify([]));
-}
+// In-memory storage for Vercel deployment
+// In production, you would use a real database like PostgreSQL, MongoDB, etc.
+const debates: Debate[] = [];
+const users: User[] = [];
 
 export class Database {
   // Debates
   static getDebates(): Debate[] {
-    try {
-      const data = fs.readFileSync(DEBATES_FILE, 'utf8');
-      return JSON.parse(data);
-    } catch (error) {
-      console.error('Error reading debates:', error);
-      return [];
-    }
+    return debates;
   }
 
   static getDebate(id: string): Debate | null {
-    const debates = this.getDebates();
     return debates.find(debate => debate.id === id) || null;
   }
 
   static getActiveDebates(): Debate[] {
-    const debates = this.getDebates();
     const now = Date.now();
     return debates.filter(debate => 
       debate.status === 'active' && debate.endsAt > now
@@ -46,9 +24,7 @@ export class Database {
 
   static createDebate(debate: Debate): boolean {
     try {
-      const debates = this.getDebates();
       debates.push(debate);
-      fs.writeFileSync(DEBATES_FILE, JSON.stringify(debates, null, 2));
       return true;
     } catch (error) {
       console.error('Error creating debate:', error);
@@ -58,12 +34,10 @@ export class Database {
 
   static updateDebate(id: string, updates: Partial<Debate>): boolean {
     try {
-      const debates = this.getDebates();
       const index = debates.findIndex(debate => debate.id === id);
       if (index === -1) return false;
       
       debates[index] = { ...debates[index], ...updates };
-      fs.writeFileSync(DEBATES_FILE, JSON.stringify(debates, null, 2));
       return true;
     } catch (error) {
       console.error('Error updating debate:', error);
@@ -73,7 +47,6 @@ export class Database {
 
   static voteDebate(debateId: string, voterId: string, vote: 'yes' | 'no'): boolean {
     try {
-      const debates = this.getDebates();
       const debateIndex = debates.findIndex(debate => debate.id === debateId);
       if (debateIndex === -1) return false;
 
@@ -95,7 +68,6 @@ export class Database {
         debate.votes.no++;
       }
 
-      fs.writeFileSync(DEBATES_FILE, JSON.stringify(debates, null, 2));
       return true;
     } catch (error) {
       console.error('Error voting on debate:', error);
@@ -105,23 +77,15 @@ export class Database {
 
   // Users
   static getUsers(): User[] {
-    try {
-      const data = fs.readFileSync(USERS_FILE, 'utf8');
-      return JSON.parse(data);
-    } catch (error) {
-      console.error('Error reading users:', error);
-      return [];
-    }
+    return users;
   }
 
   static getUser(fid: number): User | null {
-    const users = this.getUsers();
     return users.find(user => user.fid === fid) || null;
   }
 
   static createOrUpdateUser(user: User): boolean {
     try {
-      const users = this.getUsers();
       const existingIndex = users.findIndex(u => u.fid === user.fid);
       
       if (existingIndex === -1) {
@@ -130,7 +94,6 @@ export class Database {
         users[existingIndex] = { ...users[existingIndex], ...user };
       }
       
-      fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
       return true;
     } catch (error) {
       console.error('Error creating/updating user:', error);
