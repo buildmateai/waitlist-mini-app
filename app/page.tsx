@@ -95,8 +95,12 @@ export default function Home() {
                   
                   <div className={styles.debateStats}>
                     <div className={styles.voteCount}>
-                      <span className={styles.yesVotes}>👍 {debate.votes.yes}</span>
-                      <span className={styles.noVotes}>👎 {debate.votes.no}</span>
+                      <span className={styles.option1Votes}>
+                        {debate.votingOptions.option1}: {debate.votes[debate.votingOptions.option1] || 0}
+                      </span>
+                      <span className={styles.option2Votes}>
+                        {debate.votingOptions.option2}: {debate.votes[debate.votingOptions.option2] || 0}
+                      </span>
                     </div>
                     <div className={styles.debateAuthor}>
                       by @{debate.createdBy}
@@ -135,14 +139,18 @@ export default function Home() {
 function CreateDebateForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [option1, setOption1] = useState("");
+  const [option2, setOption2] = useState("");
   const [durationHours, setDurationHours] = useState(24);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title || !description) return;
+    if (!title || !description || !option1 || !option2) return;
 
     setIsSubmitting(true);
+    setError("");
     try {
       const response = await fetch('/api/debates', {
         method: 'POST',
@@ -152,6 +160,8 @@ function CreateDebateForm({ onClose, onSuccess }: { onClose: () => void; onSucce
         body: JSON.stringify({
           title,
           description,
+          option1,
+          option2,
           durationHours,
           createdBy: 'user123' // TODO: Get from Farcaster context
         }),
@@ -160,10 +170,12 @@ function CreateDebateForm({ onClose, onSuccess }: { onClose: () => void; onSucce
       if (response.ok) {
         onSuccess();
       } else {
-        console.error('Failed to create debate');
+        const errorData = await response.json();
+        setError(errorData.error || 'Failed to create debate');
       }
     } catch (error) {
       console.error('Error creating debate:', error);
+      setError('Failed to create debate');
     } finally {
       setIsSubmitting(false);
     }
@@ -199,6 +211,28 @@ function CreateDebateForm({ onClose, onSuccess }: { onClose: () => void; onSucce
               required
             />
           </div>
+
+          <div className={styles.formGroup}>
+            <label>Voting Option 1</label>
+            <input
+              type="text"
+              value={option1}
+              onChange={(e) => setOption1(e.target.value)}
+              placeholder="e.g., Dogs"
+              required
+            />
+          </div>
+
+          <div className={styles.formGroup}>
+            <label>Voting Option 2</label>
+            <input
+              type="text"
+              value={option2}
+              onChange={(e) => setOption2(e.target.value)}
+              placeholder="e.g., Cats"
+              required
+            />
+          </div>
           
           <div className={styles.formGroup}>
             <label>Duration (hours)</label>
@@ -214,6 +248,8 @@ function CreateDebateForm({ onClose, onSuccess }: { onClose: () => void; onSucce
               <option value={168}>1 week</option>
             </select>
           </div>
+
+          {error && <div className={styles.error}>{error}</div>}
           
           <div className={styles.formActions}>
             <button type="button" onClick={onClose} className={styles.cancelButton}>

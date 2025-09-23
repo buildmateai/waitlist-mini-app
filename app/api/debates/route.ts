@@ -24,11 +24,19 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { title, description, durationHours = 24, createdBy } = body;
+    const { title, description, durationHours = 24, createdBy, option1, option2 } = body;
 
-    if (!title || !description || !createdBy) {
+    if (!title || !description || !createdBy || !option1 || !option2) {
       return NextResponse.json(
-        { error: 'Missing required fields: title, description, createdBy' },
+        { error: 'Missing required fields: title, description, createdBy, option1, option2' },
+        { status: 400 }
+      );
+    }
+
+    // Check if user has already created a debate
+    if (Database.hasUserCreatedDebate(createdBy)) {
+      return NextResponse.json(
+        { error: 'User has already created a debate. Only one debate per user allowed.' },
         { status: 400 }
       );
     }
@@ -42,11 +50,16 @@ export async function POST(request: NextRequest) {
       createdAt: now,
       endsAt: now + (durationHours * 60 * 60 * 1000),
       status: 'active',
-      votes: {
-        yes: 0,
-        no: 0,
-        voters: []
-      }
+      votingOptions: {
+        option1,
+        option2
+      },
+      votes: Object.assign({}, {
+        voters: [],
+        [option1]: 0,
+        [option2]: 0
+      }),
+      chat: []
     };
 
     const success = Database.createDebate(debate);

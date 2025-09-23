@@ -24,17 +24,17 @@ export async function POST(
 ) {
   try {
     const body = await request.json();
-    const { voterId, vote } = body;
+    const { voterId, option } = body;
 
-    if (!voterId || !vote || !['yes', 'no'].includes(vote)) {
+    if (!voterId || !option) {
       return NextResponse.json(
-        { error: 'Missing or invalid fields: voterId, vote (yes/no)' },
+        { error: 'Missing required fields: voterId, option' },
         { status: 400 }
       );
     }
 
     const { id } = await params;
-    const success = Database.voteDebate(id, voterId, vote);
+    const success = Database.voteDebate(id, voterId, option);
     if (success) {
       const updatedDebate = Database.getDebate(id);
       return NextResponse.json(updatedDebate);

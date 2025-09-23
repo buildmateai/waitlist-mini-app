@@ -1,4 +1,4 @@
-import { Debate, User } from './types';
+import { Debate, User, ChatMessage } from './types';
 
 // In-memory storage for Vercel deployment
 // In production, you would use a real database like PostgreSQL, MongoDB, etc.
@@ -45,7 +45,7 @@ export class Database {
     }
   }
 
-  static voteDebate(debateId: string, voterId: string, vote: 'yes' | 'no'): boolean {
+  static voteDebate(debateId: string, voterId: string, option: string): boolean {
     try {
       const debateIndex = debates.findIndex(debate => debate.id === debateId);
       if (debateIndex === -1) return false;
@@ -60,19 +60,53 @@ export class Database {
       // Check if user already voted
       if (debate.votes.voters.includes(voterId)) return false;
 
+      // Check if option exists
+      if (!debate.votes.hasOwnProperty(option)) {
+        debate.votes[option] = 0;
+      }
+
       // Add vote
       debate.votes.voters.push(voterId);
-      if (vote === 'yes') {
-        debate.votes.yes++;
-      } else {
-        debate.votes.no++;
-      }
+      debate.votes[option]++;
 
       return true;
     } catch (error) {
       console.error('Error voting on debate:', error);
       return false;
     }
+  }
+
+  // Check if user has already created a debate
+  static hasUserCreatedDebate(userId: string): boolean {
+    return debates.some(debate => debate.createdBy === userId);
+  }
+
+  // Chat functionality
+  static addChatMessage(debateId: string, author: string, message: string): boolean {
+    try {
+      const debateIndex = debates.findIndex(debate => debate.id === debateId);
+      if (debateIndex === -1) return false;
+
+      const debate = debates[debateIndex];
+      const chatMessage: ChatMessage = {
+        id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        debateId,
+        author,
+        message,
+        timestamp: Date.now()
+      };
+
+      debate.chat.push(chatMessage);
+      return true;
+    } catch (error) {
+      console.error('Error adding chat message:', error);
+      return false;
+    }
+  }
+
+  static getChatMessages(debateId: string): ChatMessage[] {
+    const debate = debates.find(d => d.id === debateId);
+    return debate ? debate.chat : [];
   }
 
   // Users

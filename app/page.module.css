@@ -259,12 +259,12 @@
   gap: 1rem;
 }
 
-.yesVotes {
+.option1Votes {
   color: #4caf50;
   font-weight: 600;
 }
 
-.noVotes {
+.option2Votes {
   color: #f44336;
   font-weight: 600;
 }

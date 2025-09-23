@@ -6,13 +6,26 @@ export interface Debate {
   createdAt: number; // timestamp
   endsAt: number; // timestamp
   status: 'active' | 'ended' | 'cancelled';
-  votes: {
-    yes: number;
-    no: number;
-    voters: string[]; // Farcaster usernames/addresses who voted
+  votingOptions: {
+    option1: string;
+    option2: string;
   };
+  votes: {
+    voters: string[]; // Farcaster usernames/addresses who voted
+    [key: string]: number | string[]; // Dynamic voting options
+  };
+  chat: ChatMessage[]; // Chat messages for this debate
   totalStaked?: number; // For future USDC integration
   category?: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  debateId: string;
+  author: string; // Farcaster username
+  message: string;
+  timestamp: number;
+  avatar?: string;
 }
 
 export interface User {
