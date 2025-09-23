@@ -33,10 +33,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if user has already created a debate
-    if (Database.hasUserCreatedDebate(createdBy)) {
+    // Check if user has an active debate
+    if (Database.hasUserActiveDebate(createdBy)) {
       return NextResponse.json(
-        { error: 'User has already created a debate. Only one debate per user allowed.' },
+        { error: 'User already has an active debate. Please wait for it to end before creating a new one.' },
         { status: 400 }
       );
     }

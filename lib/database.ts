@@ -16,6 +16,9 @@ export class Database {
   }
 
   static getActiveDebates(): Debate[] {
+    // First update statuses to ensure accuracy
+    this.updateDebateStatuses();
+    
     const now = Date.now();
     return debates.filter(debate => 
       debate.status === 'active' && debate.endsAt > now
@@ -52,8 +55,8 @@ export class Database {
 
       const debate = debates[debateIndex];
       
-      // Check if debate is still active
-      if (debate.status !== 'active' || debate.endsAt <= Date.now()) {
+      // Check if debate is still active using helper function
+      if (!this.isDebateActive(debate)) {
         return false;
       }
       
@@ -76,9 +79,15 @@ export class Database {
     }
   }
 
-  // Check if user has already created a debate
-  static hasUserCreatedDebate(userId: string): boolean {
-    return debates.some(debate => debate.createdBy === userId);
+  // Check if user has an active debate
+  static hasUserActiveDebate(userId: string): boolean {
+    // First update statuses to ensure accuracy
+    this.updateDebateStatuses();
+    
+    return debates.some(debate => 
+      debate.createdBy === userId && 
+      this.isDebateActive(debate)
+    );
   }
 
   // Chat functionality
@@ -107,6 +116,22 @@ export class Database {
   static getChatMessages(debateId: string): ChatMessage[] {
     const debate = debates.find(d => d.id === debateId);
     return debate ? debate.chat : [];
+  }
+
+  // Helper function to check if a debate is active
+  static isDebateActive(debate: Debate): boolean {
+    const now = Date.now();
+    return debate.status === 'active' && debate.endsAt > now;
+  }
+
+  // Update debate status (call this periodically to mark ended debates)
+  static updateDebateStatuses(): void {
+    const now = Date.now();
+    debates.forEach(debate => {
+      if (debate.status === 'active' && debate.endsAt <= now) {
+        debate.status = 'ended';
+      }
+    });
   }
 
   // Users
