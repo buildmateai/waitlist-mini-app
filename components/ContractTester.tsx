@@ -10,8 +10,6 @@ export function ContractTester() {
   const [debateTitle, setDebateTitle] = useState('');
   const [debateDescription, setDebateDescription] = useState('');
   const [debateOptions, setDebateOptions] = useState(['Option 1', 'Option 2']);
-  const [stakeAmount, setStakeAmount] = useState('100');
-  const [selectedOption, setSelectedOption] = useState(0);
 
   // Contract interactions
   const { writeContract: writeDebateToken, data: debateTokenTxHash } = useWriteContract();
@@ -100,23 +98,6 @@ export function ContractTester() {
       });
     } catch (error) {
       console.error('Create debate error:', error);
-    }
-  };
-
-  const handleStakeAndVote = async (debateId: number) => {
-    try {
-      await writeDebateContract({
-        address: CONTRACT_ADDRESSES.DebateContractV2 as `0x${string}`,
-        abi: DEBATE_CONTRACT_V2_ABI,
-        functionName: 'stakeAndVote',
-        args: [
-          BigInt(debateId),
-          BigInt(selectedOption),
-          parseUnits(stakeAmount, 18)
-        ],
-      });
-    } catch (error) {
-      console.error('Stake and vote error:', error);
     }
   };
 
@@ -211,62 +192,6 @@ export function ContractTester() {
         )}
       </div>
 
-      {/* Stake and Vote */}
-      <div className="stake-vote">
-        <h3>Stake and Vote in Existing Debate</h3>
-        <div className="stake-info">
-          <p>🎯 <strong>Min Stake:</strong> {minStakeAmount ? formatUnits(minStakeAmount as bigint, 18) : '10'} DEBATE</p>
-          <p>💡 <strong>Tip:</strong> Higher stakes = more influence on the outcome</p>
-        </div>
-        
-        <div className="stake-input">
-          <label>Stake Amount (DEBATE):</label>
-          <input
-            type="number"
-            placeholder={`Min: ${minStakeAmount ? formatUnits(minStakeAmount as bigint, 18) : '10'}`}
-            value={stakeAmount}
-            onChange={(e) => setStakeAmount(e.target.value)}
-            min={minStakeAmount ? formatUnits(minStakeAmount as bigint, 18) : '10'}
-          />
-          <div className="stake-slider">
-            <input
-              type="range"
-              min={minStakeAmount ? formatUnits(minStakeAmount as bigint, 18) : '10'}
-              max="1000"
-              step="10"
-              value={stakeAmount}
-              onChange={(e) => setStakeAmount(e.target.value)}
-            />
-            <div className="stake-labels">
-              <span>{minStakeAmount ? formatUnits(minStakeAmount as bigint, 18) : '10'}</span>
-              <span>1000</span>
-            </div>
-          </div>
-        </div>
-        
-        <div className="vote-options">
-          <label>Choose your option:</label>
-          <div className="option-buttons">
-            {debateOptions.map((option, index) => (
-              <button
-                key={index}
-                className={`option-button ${selectedOption === index ? 'selected' : ''}`}
-                onClick={() => setSelectedOption(index)}
-              >
-                {option}
-              </button>
-            ))}
-          </div>
-        </div>
-        
-        <button 
-          onClick={() => handleStakeAndVote(1)}
-          disabled={debateContractLoading || !stakeAmount || Number(stakeAmount) < Number(minStakeAmount ? formatUnits(minStakeAmount as bigint, 18) : '10')}
-          className="vote-button"
-        >
-          {debateContractLoading ? 'Voting...' : `Stake ${stakeAmount} DEBATE and Vote`}
-        </button>
-      </div>
 
       {/* Transaction Status */}
       {(debateTokenTxHash || mockUSDCTxHash || debateContractTxHash) && (

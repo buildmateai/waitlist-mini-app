@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
-import { CONTRACT_ADDRESSES, MOCK_USDC_ABI, DEBATE_CONTRACT_V2_ABI } from '@/lib/blockchain';
-import { parseUnits } from 'viem';
+import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
+import { CONTRACT_ADDRESSES, DEBATE_TOKEN_ABI, DEBATE_CONTRACT_V2_ABI } from '@/lib/blockchain';
+import { parseUnits, formatUnits } from 'viem';
 
 interface StakingInterfaceProps {
   debateId: number;
@@ -19,7 +19,17 @@ export function StakingInterface({ debateId, options, onStakeSuccess }: StakingI
   
   const { address } = useAccount();
   
-  const { writeContract: approveUSDC, data: approveHash } = useWriteContract();
+  // Read min stake amount from contract
+  const { data: minStakeAmount } = useReadContract({
+    address: CONTRACT_ADDRESSES.DebateContractV2 as `0x${string}`,
+    abi: DEBATE_CONTRACT_V2_ABI,
+    functionName: 'minStakeAmount',
+    query: {
+      enabled: !!CONTRACT_ADDRESSES.DebateContractV2,
+    },
+  });
+  
+  const { writeContract: approveDebateToken, data: approveHash } = useWriteContract();
   const { writeContract: stakeAndVote, data: stakeHash } = useWriteContract();
   
   const { isLoading: isApprovingTx } = useWaitForTransactionReceipt({
@@ -35,11 +45,11 @@ export function StakingInterface({ debateId, options, onStakeSuccess }: StakingI
     
     setIsApproving(true);
     try {
-      const amount = parseUnits(stakeAmount, 6); // USDC has 6 decimals
+      const amount = parseUnits(stakeAmount, 18); // DEBATE has 18 decimals
       
-      await approveUSDC({
-        address: CONTRACT_ADDRESSES.MockUSDC as `0x${string}`,
-        abi: MOCK_USDC_ABI,
+      await approveDebateToken({
+        address: CONTRACT_ADDRESSES.DebateToken as `0x${string}`,
+        abi: DEBATE_TOKEN_ABI,
         functionName: 'approve',
         args: [CONTRACT_ADDRESSES.DebateContractV2 as `0x${string}`, amount],
       });
@@ -55,101 +65,116 @@ export function StakingInterface({ debateId, options, onStakeSuccess }: StakingI
     
     setIsStaking(true);
     try {
-      const amount = parseUnits(stakeAmount, 6);
-      
       await stakeAndVote({
         address: CONTRACT_ADDRESSES.DebateContractV2 as `0x${string}`,
         abi: DEBATE_CONTRACT_V2_ABI,
         functionName: 'stakeAndVote',
-        args: [BigInt(debateId), BigInt(selectedOption), amount],
+        args: [
+          BigInt(debateId),
+          BigInt(selectedOption),
+          parseUnits(stakeAmount, 18)
+        ],
       });
       
-      onStakeSuccess();
+      // Call success callback after transaction
+      setTimeout(() => {
+        onStakeSuccess();
+      }, 2000);
     } catch (error) {
-      console.error('Staking failed:', error);
+      console.error('Stake and vote failed:', error);
     } finally {
       setIsStaking(false);
     }
   };
 
-  const handleFaucet = async () => {
-    try {
-      await approveUSDC({
-        address: CONTRACT_ADDRESSES.MockUSDC as `0x${string}`,
-        abi: MOCK_USDC_ABI,
-        functionName: 'faucet',
-        args: [],
-      });
-    } catch (error) {
-      console.error('Faucet failed:', error);
-    }
-  };
+  const minStake = minStakeAmount ? formatUnits(minStakeAmount as bigint, 18) : '10';
+  const maxStake = '1000';
 
   return (
     <div className="staking-interface">
-      <h3>💰 Stake USDC & Vote</h3>
+      <h3>🎯 Stake DEBATE Tokens and Vote</h3>
       
-      <div className="faucet-section">
-        <p>Need USDC for testing? Get some from the faucet:</p>
-        <button 
-          onClick={handleFaucet}
-          disabled={isApprovingTx}
-          className="faucet-button"
-        >
-          {isApprovingTx ? 'Getting USDC...' : 'Get 1000 USDC'}
-        </button>
+      <div className="stake-info">
+        <p>💰 <strong>Min Stake:</strong> {minStake} DEBATE</p>
+        <p>💡 <strong>Tip:</strong> Higher stakes = more influence on the outcome</p>
       </div>
-
-      <div className="staking-form">
-        <div className="option-selection">
-          <label>Choose your option:</label>
-          <div className="options-grid">
-            {options.map((option, index) => (
-              <label key={index} className="option-radio">
-                <input
-                  type="radio"
-                  name="option"
-                  value={index}
-                  checked={selectedOption === index}
-                  onChange={(e) => setSelectedOption(Number(e.target.value))}
-                />
-                <span>{option}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-
-        <div className="amount-selection">
-          <label htmlFor="stakeAmount">Stake Amount (USDC):</label>
+      
+      <div className="stake-input">
+        <label>Stake Amount (DEBATE):</label>
+        <input
+          type="number"
+          placeholder={`Min: ${minStake}`}
+          value={stakeAmount}
+          onChange={(e) => setStakeAmount(e.target.value)}
+          min={minStake}
+          max={maxStake}
+        />
+        <div className="stake-slider">
           <input
-            id="stakeAmount"
-            type="number"
-            min="10"
-            step="1"
+            type="range"
+            min={minStake}
+            max={maxStake}
+            step="10"
             value={stakeAmount}
             onChange={(e) => setStakeAmount(e.target.value)}
-            placeholder="Minimum 10 USDC"
           />
-        </div>
-
-        <div className="staking-actions">
-          <button
-            onClick={handleApprove}
-            disabled={isApproving || isApprovingTx || !stakeAmount}
-            className="approve-button"
-          >
-            {isApproving || isApprovingTx ? 'Approving...' : 'Approve USDC'}
-          </button>
-          
-          <button
-            onClick={handleStakeAndVote}
-            disabled={isStaking || isStakingTx || !approveHash}
-            className="stake-button"
-          >
-            {isStaking || isStakingTx ? 'Staking...' : 'Stake & Vote'}
-          </button>
+          <div className="stake-labels">
+            <span>{minStake}</span>
+            <span>{maxStake}</span>
+          </div>
         </div>
       </div>
+      
+      <div className="vote-options">
+        <label>Choose your option:</label>
+        <div className="option-buttons">
+          {options.map((option, index) => (
+            <button
+              key={index}
+              className={`option-button ${selectedOption === index ? 'selected' : ''}`}
+              onClick={() => setSelectedOption(index)}
+            >
+              {option}
+            </button>
+          ))}
+        </div>
+      </div>
+      
+      <div className="action-buttons">
+        <button 
+          onClick={handleApprove}
+          disabled={isApproving || isApprovingTx || !stakeAmount || Number(stakeAmount) < Number(minStake)}
+          className="approve-button"
+        >
+          {isApproving || isApprovingTx ? 'Approving...' : `Approve ${stakeAmount} DEBATE`}
+        </button>
+        
+        <button 
+          onClick={handleStakeAndVote}
+          disabled={isStaking || isStakingTx || !approveHash || !stakeAmount || Number(stakeAmount) < Number(minStake)}
+          className="stake-button"
+        >
+          {isStaking || isStakingTx ? 'Staking...' : `Stake ${stakeAmount} DEBATE and Vote`}
+        </button>
+      </div>
+      
+      {approveHash && (
+        <div className="tx-info">
+          <p>✅ Approval transaction sent!</p>
+          <a href={`https://sepolia.etherscan.io/tx/${approveHash}`} target="_blank" rel="noopener noreferrer">
+            View Approval on Etherscan: {approveHash.slice(0, 10)}...
+          </a>
+        </div>
+      )}
+      
+      {stakeHash && (
+        <div className="tx-info">
+          <p>✅ Vote transaction sent!</p>
+          <a href={`https://sepolia.etherscan.io/tx/${stakeHash}`} target="_blank" rel="noopener noreferrer">
+            View Vote on Etherscan: {stakeHash.slice(0, 10)}...
+          </a>
+        </div>
+      )}
 
       <style jsx>{`
         .staking-interface {
@@ -167,117 +192,127 @@ export function StakingInterface({ debateId, options, onStakeSuccess }: StakingI
           font-size: 1.5rem;
         }
 
-        .faucet-section {
-          background: rgba(0, 255, 0, 0.1);
+        .stake-info {
+          background: rgba(255, 193, 7, 0.1);
+          border: 1px solid rgba(255, 193, 7, 0.3);
           border-radius: 8px;
           padding: 15px;
           margin-bottom: 20px;
-          border: 1px solid rgba(0, 255, 0, 0.3);
         }
 
-        .faucet-section p {
-          margin: 0 0 10px 0;
-          color: #90EE90;
+        .stake-info p {
+          margin: 0.5rem 0;
+          color: #ffc107;
+          font-size: 0.9rem;
         }
 
-        .faucet-button {
-          background: linear-gradient(135deg, #00ff00, #00cc00);
-          color: #000;
-          border: none;
-          padding: 10px 20px;
-          border-radius: 8px;
-          font-weight: bold;
-          cursor: pointer;
-          transition: all 0.3s ease;
+        .stake-input {
+          margin-bottom: 20px;
         }
 
-        .faucet-button:hover:not(:disabled) {
-          transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(0, 255, 0, 0.3);
-        }
-
-        .faucet-button:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-        }
-
-        .staking-form {
-          display: flex;
-          flex-direction: column;
-          gap: 20px;
-        }
-
-        .option-selection label {
+        .stake-input label {
+          color: #a7e9af;
+          font-weight: 600;
+          margin-bottom: 0.5rem;
           display: block;
-          margin-bottom: 10px;
-          color: #fff;
-          font-weight: bold;
         }
 
-        .options-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-          gap: 10px;
-        }
-
-        .option-radio {
-          display: flex;
-          align-items: center;
-          gap: 8px;
+        .stake-input input[type="number"] {
+          width: 100%;
           padding: 12px;
-          background: rgba(255, 255, 255, 0.1);
           border-radius: 8px;
-          border: 2px solid transparent;
-          cursor: pointer;
-          transition: all 0.3s ease;
-        }
-
-        .option-radio:hover {
-          background: rgba(255, 255, 255, 0.15);
-        }
-
-        .option-radio input[type="radio"] {
-          margin: 0;
-        }
-
-        .option-radio input[type="radio"]:checked + span {
-          color: #00ff88;
-          font-weight: bold;
-        }
-
-        .option-radio:has(input[type="radio"]:checked) {
-          border-color: #00ff88;
-          background: rgba(0, 255, 136, 0.1);
-        }
-
-        .amount-selection {
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-        }
-
-        .amount-selection label {
-          color: #fff;
-          font-weight: bold;
-        }
-
-        .amount-selection input {
-          padding: 12px;
-          border: 1px solid rgba(255, 255, 255, 0.3);
-          border-radius: 8px;
-          background: rgba(255, 255, 255, 0.1);
-          color: #fff;
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          background: rgba(0, 0, 0, 0.3);
+          color: white;
+          margin-bottom: 0.5rem;
           font-size: 16px;
         }
 
-        .amount-selection input::placeholder {
+        .stake-slider {
+          margin-top: 0.5rem;
+        }
+
+        .stake-slider input[type="range"] {
+          width: 100%;
+          height: 6px;
+          border-radius: 3px;
+          background: rgba(255, 255, 255, 0.2);
+          outline: none;
+          -webkit-appearance: none;
+        }
+
+        .stake-slider input[type="range"]::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 20px;
+          height: 20px;
+          border-radius: 50%;
+          background: #667eea;
+          cursor: pointer;
+        }
+
+        .stake-slider input[type="range"]::-moz-range-thumb {
+          width: 20px;
+          height: 20px;
+          border-radius: 50%;
+          background: #667eea;
+          cursor: pointer;
+          border: none;
+        }
+
+        .stake-labels {
+          display: flex;
+          justify-content: space-between;
+          margin-top: 0.5rem;
+          font-size: 0.8rem;
           color: rgba(255, 255, 255, 0.6);
         }
 
-        .staking-actions {
+        .vote-options {
+          margin-bottom: 20px;
+        }
+
+        .vote-options label {
+          color: #a7e9af;
+          font-weight: 600;
+          margin-bottom: 0.5rem;
+          display: block;
+        }
+
+        .option-buttons {
+          display: flex;
+          gap: 0.5rem;
+          flex-wrap: wrap;
+        }
+
+        .option-button {
+          flex: 1;
+          padding: 12px 16px;
+          border-radius: 8px;
+          border: 2px solid rgba(255, 255, 255, 0.2);
+          background: rgba(0, 0, 0, 0.3);
+          color: white;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          font-size: 0.9rem;
+        }
+
+        .option-button:hover {
+          border-color: rgba(255, 255, 255, 0.4);
+          background: rgba(255, 255, 255, 0.1);
+        }
+
+        .option-button.selected {
+          border-color: #667eea;
+          background: rgba(102, 126, 234, 0.2);
+          color: #a7e9af;
+        }
+
+        .action-buttons {
           display: flex;
           gap: 15px;
           flex-wrap: wrap;
+          margin-bottom: 20px;
         }
 
         .approve-button, .stake-button {
@@ -315,8 +350,32 @@ export function StakingInterface({ debateId, options, onStakeSuccess }: StakingI
           transform: none;
         }
 
+        .tx-info {
+          background: rgba(33, 150, 243, 0.1);
+          border: 1px solid rgba(33, 150, 243, 0.3);
+          border-radius: 8px;
+          padding: 15px;
+          margin-top: 15px;
+        }
+
+        .tx-info p {
+          margin: 0.5rem 0;
+          color: #2196F3;
+          font-weight: 600;
+        }
+
+        .tx-info a {
+          color: #2196F3;
+          text-decoration: none;
+          font-size: 0.9rem;
+        }
+
+        .tx-info a:hover {
+          text-decoration: underline;
+        }
+
         @media (max-width: 768px) {
-          .staking-actions {
+          .action-buttons {
             flex-direction: column;
           }
           
