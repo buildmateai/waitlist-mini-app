@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { CONTRACT_ADDRESSES, MOCK_USDC_ABI, DEBATE_CONTRACT_V2_ABI } from '@/lib/blockchain';
-import { parseUnits, formatUnits } from 'viem';
+import { parseUnits } from 'viem';
 
 interface StakingInterfaceProps {
   debateId: number;

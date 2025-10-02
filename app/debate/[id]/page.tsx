@@ -74,7 +74,7 @@ export default function DebateDetailPage() {
       setHasVoted(Boolean(hasVotedBlockchain));
       
       if (userVoteData && Array.isArray(userVoteData) && blockchainData && Array.isArray(blockchainData) && blockchainData.length > 3) {
-        const [stake, optionIndex] = userVoteData;
+        const [, optionIndex] = userVoteData;
         const options = blockchainData[3]; // options is at index 3 in the returned array
         if (Array.isArray(options)) {
           setUserVote(options[Number(optionIndex)]);

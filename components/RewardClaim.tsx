@@ -58,7 +58,7 @@ export function RewardClaim({
     return (
       <div className="reward-claim">
         <div className="not-winner">
-          <p>❌ You didn't win this debate</p>
+          <p>❌ You didn&apos;t win this debate</p>
           <p>Better luck next time!</p>
         </div>
       </div>
