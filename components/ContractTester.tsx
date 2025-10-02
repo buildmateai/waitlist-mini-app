@@ -34,18 +34,27 @@ export function ContractTester() {
     address: CONTRACT_ADDRESSES.DebateContractV2 as `0x${string}`,
     abi: DEBATE_CONTRACT_V2_ABI,
     functionName: 'getTotalDebates',
+    query: {
+      enabled: !!CONTRACT_ADDRESSES.DebateContractV2,
+    },
   });
 
   const { data: minStakeAmount } = useReadContract({
     address: CONTRACT_ADDRESSES.DebateContractV2 as `0x${string}`,
     abi: DEBATE_CONTRACT_V2_ABI,
     functionName: 'minStakeAmount',
+    query: {
+      enabled: !!CONTRACT_ADDRESSES.DebateContractV2,
+    },
   });
 
   const { data: creationFee } = useReadContract({
     address: CONTRACT_ADDRESSES.DebateContractV2 as `0x${string}`,
     abi: DEBATE_CONTRACT_V2_ABI,
     functionName: 'debateCreationFee',
+    query: {
+      enabled: !!CONTRACT_ADDRESSES.DebateContractV2,
+    },
   });
 
   // Functions
@@ -152,24 +161,30 @@ export function ContractTester() {
 
       {/* Create Debate */}
       <div className="create-debate">
-        <h3>Create Debate</h3>
+        <h3>Create New Debate</h3>
+        <div className="cost-info">
+          <p>💰 <strong>Creation Cost:</strong> {creationFee ? formatUnits(creationFee as bigint, 18) : '50'} DEBATE tokens</p>
+          <p>⏱️ <strong>Duration:</strong> 1 hour</p>
+        </div>
+        
         <input
           type="text"
-          placeholder="Debate Title"
+          placeholder="Debate Title (e.g., Is AI good for humanity?)"
           value={debateTitle}
           onChange={(e) => setDebateTitle(e.target.value)}
         />
         <textarea
-          placeholder="Debate Description"
+          placeholder="Debate Description (provide context and details...)"
           value={debateDescription}
           onChange={(e) => setDebateDescription(e.target.value)}
         />
-        <div>
-          <label>Options:</label>
+        <div className="options-section">
+          <label>Voting Options:</label>
           {debateOptions.map((option, index) => (
             <input
               key={index}
               type="text"
+              placeholder={`Option ${index + 1} (e.g., ${index === 0 ? 'Yes, AI is beneficial' : 'No, AI is dangerous'})`}
               value={option}
               onChange={(e) => {
                 const newOptions = [...debateOptions];
@@ -181,36 +196,75 @@ export function ContractTester() {
         </div>
         <button 
           onClick={handleCreateDebate}
-          disabled={debateContractLoading || !debateTitle || !debateDescription}
+          disabled={debateContractLoading || !debateTitle || !debateDescription || !debateOptions[0] || !debateOptions[1]}
+          className="create-button"
         >
-          {debateContractLoading ? 'Creating...' : 'Create Debate'}
+          {debateContractLoading ? 'Creating Debate...' : `Create Debate (${creationFee ? formatUnits(creationFee as bigint, 18) : '50'} DEBATE)`}
         </button>
+        {debateContractTxHash && (
+          <div className="tx-info">
+            <p>✅ Transaction sent!</p>
+            <a href={`https://sepolia.etherscan.io/tx/${debateContractTxHash}`} target="_blank" rel="noopener noreferrer">
+              View on Etherscan: {debateContractTxHash.slice(0, 10)}...
+            </a>
+          </div>
+        )}
       </div>
 
       {/* Stake and Vote */}
       <div className="stake-vote">
-        <h3>Stake and Vote</h3>
-        <input
-          type="number"
-          placeholder="Stake Amount (DEBATE)"
-          value={stakeAmount}
-          onChange={(e) => setStakeAmount(e.target.value)}
-        />
-        <select 
-          value={selectedOption} 
-          onChange={(e) => setSelectedOption(Number(e.target.value))}
-        >
-          {debateOptions.map((option, index) => (
-            <option key={index} value={index}>
-              {option}
-            </option>
-          ))}
-        </select>
+        <h3>Stake and Vote in Existing Debate</h3>
+        <div className="stake-info">
+          <p>🎯 <strong>Min Stake:</strong> {minStakeAmount ? formatUnits(minStakeAmount as bigint, 18) : '10'} DEBATE</p>
+          <p>💡 <strong>Tip:</strong> Higher stakes = more influence on the outcome</p>
+        </div>
+        
+        <div className="stake-input">
+          <label>Stake Amount (DEBATE):</label>
+          <input
+            type="number"
+            placeholder={`Min: ${minStakeAmount ? formatUnits(minStakeAmount as bigint, 18) : '10'}`}
+            value={stakeAmount}
+            onChange={(e) => setStakeAmount(e.target.value)}
+            min={minStakeAmount ? formatUnits(minStakeAmount as bigint, 18) : '10'}
+          />
+          <div className="stake-slider">
+            <input
+              type="range"
+              min={minStakeAmount ? formatUnits(minStakeAmount as bigint, 18) : '10'}
+              max="1000"
+              step="10"
+              value={stakeAmount}
+              onChange={(e) => setStakeAmount(e.target.value)}
+            />
+            <div className="stake-labels">
+              <span>{minStakeAmount ? formatUnits(minStakeAmount as bigint, 18) : '10'}</span>
+              <span>1000</span>
+            </div>
+          </div>
+        </div>
+        
+        <div className="vote-options">
+          <label>Choose your option:</label>
+          <div className="option-buttons">
+            {debateOptions.map((option, index) => (
+              <button
+                key={index}
+                className={`option-button ${selectedOption === index ? 'selected' : ''}`}
+                onClick={() => setSelectedOption(index)}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+        </div>
+        
         <button 
           onClick={() => handleStakeAndVote(1)}
-          disabled={debateContractLoading || !stakeAmount}
+          disabled={debateContractLoading || !stakeAmount || Number(stakeAmount) < Number(minStakeAmount ? formatUnits(minStakeAmount as bigint, 18) : '10')}
+          className="vote-button"
         >
-          {debateContractLoading ? 'Voting...' : 'Stake and Vote'}
+          {debateContractLoading ? 'Voting...' : `Stake ${stakeAmount} DEBATE and Vote`}
         </button>
       </div>
 
