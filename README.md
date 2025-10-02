@@ -81,10 +81,19 @@ Debate App is a Base Mini App that enables users to:
 - **In-memory Database**: Simple array-based storage for MVP
 - **RESTful API**: Clean API design with proper HTTP methods
 
+### **Blockchain**
+- **Hardhat**: Smart contract development framework
+- **Solidity 0.8.20**: Smart contract language
+- **OpenZeppelin**: Security-focused contract library
+- **Wagmi**: React hooks for Ethereum
+- **RainbowKit**: Wallet connection UI
+- **Viem**: TypeScript Ethereum library
+
 ### **Deployment**
 - **Vercel**: Hosting and deployment platform
 - **Base Mini App**: Integration with Farcaster ecosystem
 - **GitHub**: Version control and CI/CD
+- **Ethereum Sepolia**: Testnet deployment for smart contracts
 
 ### **Base Mini App Integration**
 - **MiniApp SDK**: Farcaster integration
@@ -123,20 +132,42 @@ waitlist-mini-app/
 │   └── globals.css                       # Global styles
 ├── lib/
 │   ├── database.ts                       # Database operations
-│   └── types.ts                          # TypeScript interfaces
+│   ├── types.ts                          # TypeScript interfaces
+│   └── blockchain.ts                     # Blockchain configuration & ABIs
+├── components/
+│   ├── BlockchainProvider.tsx            # Wagmi + RainbowKit provider
+│   ├── WalletConnection.tsx              # Wallet connection component
+│   ├── ContractTester.tsx                # Interactive contract testing
+│   ├── StakingInterface.tsx              # Staking and voting interface
+│   └── RewardClaim.tsx                   # Reward claiming component
+├── contracts/
+│   ├── DebateToken.sol                   # Native DEBATE token
+│   ├── MockUSDC.sol                      # Test USDC token
+│   ├── DebateContractV2.sol             # Enhanced debate contract
+│   └── DebateContract.sol                # Legacy contract
+├── scripts/
+│   ├── deploy.ts                         # Contract deployment script
+│   ├── test-contracts.ts                 # Contract testing script
+│   └── check-balance.ts                  # Balance checking utilities
+├── typechain-types/                      # Generated TypeScript types
+├── artifacts/                            # Compiled contract artifacts
 ├── public/                               # Static assets
 ├── minikit.config.ts                     # Base Mini App config
 ├── next.config.ts                        # Next.js config
+├── hardhat.config.ts                     # Hardhat configuration
+├── TESTING_GUIDE.md                      # Blockchain testing guide
 └── package.json                          # Dependencies
 ```
 
 ### **Data Flow**
-1. **User creates debate** → POST /api/debates
-2. **Database validates** → Check for existing active debates
-3. **Debate stored** → In-memory array with unique ID
-4. **Users join debate** → Navigate to /debate/[id]
-5. **Real-time updates** → Timer, votes, chat via API calls
-6. **Results displayed** → /results page with comprehensive data
+1. **User connects wallet** → RainbowKit + Wagmi integration
+2. **User creates debate** → POST /api/debates + Smart contract call
+3. **Database validates** → Check for existing active debates
+4. **Debate stored** → In-memory array + Blockchain state
+5. **Users join debate** → Navigate to /debate/[id]
+6. **Real-time updates** → Timer, votes, chat via API calls + Blockchain events
+7. **Results displayed** → /results page with comprehensive data
+8. **Rewards distributed** → Automatic DEBATE token distribution to winners
 
 ## 🔌 API Endpoints
 
@@ -321,6 +352,18 @@ npm start
 
 ### **Environment Variables**
 ```bash
+# Frontend Configuration
+NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=your-project-id
+
+# Contract Addresses (Ethereum Sepolia)
+NEXT_PUBLIC_DEBATE_TOKEN_ADDRESS=0x6B89494D4a96f4D16D294c4afa3583A076f51397
+NEXT_PUBLIC_MOCK_USDC_ADDRESS=0x5Cbd5C4e3ab02254dF6B104A7C842e7C3e60eEF0
+NEXT_PUBLIC_DEBATE_CONTRACT_V2_ADDRESS=0x4e43B6B6e6605B43b3287FDfdA0cA32dFf5eE001
+
+# Network Configuration
+NEXT_PUBLIC_CHAIN_ID=11155111
+NEXT_PUBLIC_NETWORK_NAME=Ethereum Sepolia
+
 # Optional: Custom URL for production
 NEXT_PUBLIC_URL=https://your-domain.vercel.app
 
@@ -335,21 +378,30 @@ npm run build        # Build for production
 npm run start        # Start production server
 npm run lint         # Run ESLint
 npm run type-check   # Run TypeScript checks
+
+# Blockchain Development
+npm run compile      # Compile smart contracts
+npm run deploy       # Deploy contracts to testnet
+npm run test         # Run contract tests
 ```
 
 ## 🔮 Future Enhancements
 
-### **Phase 2: Blockchain Integration**
-- **USDC Staking**: Users stake USDC to participate in debates
-- **Smart Contracts**: On-chain voting and reward distribution
-- **Winner Rewards**: Automatic USDC distribution to winning side
-- **NFT Badges**: Unique NFTs for debate winners
+### **Phase 2: Blockchain Integration** ✅ **COMPLETED**
+- **✅ Native DEBATE Token**: Custom ERC-20 token with staking rewards (5% APY)
+- **✅ Smart Contracts**: Deployed on Ethereum Sepolia testnet
+- **✅ USDC Staking**: MockUSDC faucet for testing
+- **✅ Winner Rewards**: Automatic DEBATE token distribution to winning side
+- **✅ Contract Testing**: Interactive ContractTester component
+- **✅ Wallet Integration**: RainbowKit + Wagmi for wallet connection
 
-### **Phase 3: Advanced Features**
+### **Phase 3: Advanced Features** 🚧 **IN PROGRESS**
 - **Chainlink Oracles**: Verify external claims (e.g., ETH price)
 - **Multi-option Voting**: Support for 3+ voting options
 - **Debate Categories**: Organize debates by topics
 - **User Profiles**: Enhanced user profiles with debate history
+- **Frontend-Blockchain Integration**: Connect existing debate system with smart contracts
+- **Real-time Blockchain Updates**: Sync frontend with blockchain events
 
 ### **Phase 4: Social Features**
 - **Farcaster Integration**: Native Farcaster authentication
@@ -374,28 +426,124 @@ npm run type-check   # Run TypeScript checks
 - [x] Responsive design with modern UI/UX
 - [x] Base Mini App integration and deployment
 - [x] Backward compatibility for existing data
+- [x] **Blockchain Integration**: Smart contracts deployed on Ethereum Sepolia
+- [x] **Native DEBATE Token**: ERC-20 token with staking and burn mechanics
+- [x] **Wallet Connection**: RainbowKit + Wagmi integration
+- [x] **Contract Testing**: Interactive testing interface
+- [x] **MockUSDC Faucet**: Test token distribution system
 
 ### 🔄 **Ready for Enhancement**
-- [ ] USDC staking integration
-- [ ] Smart contract deployment
-- [ ] Farcaster native authentication
-- [ ] Real-time WebSocket connections
-- [ ] Advanced analytics and trending
-- [ ] NFT badge system
+- [ ] **Frontend-Blockchain Sync**: Connect existing debate system with smart contracts
+- [ ] **Real-time Blockchain Events**: WebSocket integration for live updates
+- [ ] **Production Deployment**: Deploy on Base mainnet
+- [ ] **Farcaster native authentication**
+- [ ] **Advanced analytics and trending**
+- [ ] **NFT badge system**
 
 ## 🤝 Contributing
 
 This MVP provides a solid foundation for a decentralized debate platform. The modular architecture makes it easy to add new features while maintaining compatibility with existing functionality.
 
 ### **Key Development Areas**
-1. **Blockchain Integration**: Add USDC staking and smart contracts
-2. **Real-time Features**: Implement WebSocket for live updates
-3. **User Experience**: Enhance UI/UX with advanced interactions
-4. **Analytics**: Add comprehensive analytics and insights
-5. **Social Features**: Integrate deeper with Farcaster ecosystem
+1. **✅ Blockchain Integration**: COMPLETED - Smart contracts deployed, DEBATE token created
+2. **🚧 Frontend-Blockchain Sync**: Connect existing debate system with deployed contracts
+3. **Real-time Features**: Implement WebSocket for live blockchain updates
+4. **User Experience**: Enhance UI/UX with blockchain interactions
+5. **Analytics**: Add comprehensive analytics and insights
+6. **Social Features**: Integrate deeper with Farcaster ecosystem
+
+---
+
+## 🚀 **BLOCKCHAIN INTEGRATION UPDATE** - January 2, 2025
+
+### **✅ What We Accomplished Today**
+
+#### **1. Smart Contract Deployment**
+- **DebateToken**: `0x6B89494D4a96f4D16D294c4afa3583A076f51397`
+  - Native ERC-20 token with 100M initial supply, 1B max supply
+  - 5% APY staking rewards with lock periods
+  - 2% burn on transfers (deflationary mechanism)
+  - Pausable and ownable for security
+
+- **MockUSDC**: `0x5Cbd5C4e3ab02254dF6B104A7C842e7C3e60eEF0`
+  - ERC-20 test token with faucet functionality
+  - 1000 USDC per user with cooldown periods
+  - Burn functionality for testing
+
+- **DebateContractV2**: `0x4e43B6B6e6605B43b3287FDfdA0cA32dFf5eE001`
+  - Enhanced debate contract with DEBATE token integration
+  - 50 DEBATE creation fee, platform fees (5%)
+  - Min/max stake limits, one active debate per user
+  - Reward distribution to winners
+
+#### **2. Frontend Integration**
+- **Updated blockchain configuration** with Ethereum Sepolia support
+- **Created ContractTester component** for interactive testing
+- **Enhanced WalletConnection** to show DEBATE and MockUSDC balances
+- **Fixed all TypeScript compilation errors**
+- **Added comprehensive testing guide** (`TESTING_GUIDE.md`)
+
+#### **3. Testing Infrastructure**
+- **Interactive testing interface** with faucet, minting, and voting
+- **Real-time balance display** for all tokens
+- **Transaction status tracking** with hash display
+- **Comprehensive error handling** and user feedback
+
+### **🔗 Contract Links**
+- [DebateToken on Etherscan](https://sepolia.etherscan.io/address/0x6B89494D4a96f4D16D294c4afa3583A076f51397)
+- [MockUSDC on Etherscan](https://sepolia.etherscan.io/address/0x5Cbd5C4e3ab02254dF6B104A7C842e7C3e60eEF0)
+- [DebateContractV2 on Etherscan](https://sepolia.etherscan.io/address/0x4e43B6B6e6605B43b3287FDfdA0cA32dFf5eE001)
+
+### **🧪 How to Test**
+1. **Connect wallet** to Ethereum Sepolia testnet
+2. **Use ContractTester** to get test tokens (faucet + mint)
+3. **Create debates** (50 DEBATE fee)
+4. **Stake and vote** with DEBATE tokens
+5. **Check results** on Etherscan
+
+### **🚧 Next Steps (Priority Order)**
+
+#### **Immediate (Next Session)**
+1. **Frontend-Blockchain Sync**: Connect existing debate creation system with smart contracts
+2. **Real-time Updates**: Implement WebSocket for blockchain event listening
+3. **Debate Integration**: Replace mock voting with actual blockchain voting
+4. **Reward System**: Implement automatic reward claiming
+
+#### **Short Term (1-2 Sessions)**
+1. **Production Deployment**: Deploy on Base mainnet with real USDC
+2. **Farcaster Integration**: Native authentication and user profiles
+3. **Advanced UI**: Enhanced blockchain interaction components
+4. **Analytics Dashboard**: Blockchain metrics and statistics
+
+#### **Medium Term (3-5 Sessions)**
+1. **Multi-option Voting**: Support for 3+ voting options
+2. **NFT Badges**: Unique NFTs for debate winners
+3. **Governance System**: DEBATE token holder voting
+4. **Advanced Staking**: Multiple staking pools and rewards
+
+### **📁 Key Files Modified Today**
+- `lib/blockchain.ts` - Updated with new contract addresses and ABI
+- `components/ContractTester.tsx` - New testing interface
+- `components/WalletConnection.tsx` - Enhanced with token balances
+- `app/page.tsx` - Added blockchain integration
+- `env.example` - Updated with contract addresses
+- `TESTING_GUIDE.md` - Comprehensive testing instructions
+
+### **🔧 Technical Notes**
+- **Network**: Ethereum Sepolia (Chain ID: 11155111)
+- **RPC**: https://ethereum-sepolia.publicnode.com
+- **Explorer**: https://sepolia.etherscan.io
+- **Deployer**: 0xBD02C1f3371f83ec72f3b58d86457Ed31D8f8923
+- **Gas Optimization**: viaIR enabled for complex contracts
+
+### **⚠️ Important Notes**
+- **Testnet Only**: All contracts are on Ethereum Sepolia testnet
+- **Mock Tokens**: MockUSDC is for testing only, not real USDC
+- **Frontend Disconnect**: Current frontend still uses mock data, needs blockchain sync
+- **Environment**: Need to set up `.env.local` with contract addresses for local testing
 
 ---
 
 **Built with ❤️ for the Base ecosystem**
 
-*Last updated: January 2025*
+*Last updated: January 2, 2025*
