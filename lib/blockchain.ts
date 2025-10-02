@@ -3,7 +3,7 @@ import { baseSepolia, base, sepolia } from 'wagmi/chains';
 
 export const config = getDefaultConfig({
   appName: 'Debate App',
-  projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'your-project-id',
+  projectId: '1a2b3c4d5e6f7g8h9i0j1k2l3m4n5o6p',
   chains: [sepolia, baseSepolia, base],
   ssr: true,
 });
