@@ -1,13 +1,19 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useAccount, useReadContract } from "wagmi";
 import { Debate, ChatMessage } from "../../../lib/types";
+import { CONTRACT_ADDRESSES, DEBATE_CONTRACT_V2_ABI } from "../../../lib/blockchain";
+import { StakingInterface } from "../../../components/StakingInterface";
+import { WalletConnection } from "../../../components/WalletConnection";
 import styles from "./page.module.css";
 
 export default function DebateDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { address, isConnected } = useAccount();
   const [debate, setDebate] = useState<Debate | null>(null);
+  const [blockchainDebate, setBlockchainDebate] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasVoted, setHasVoted] = useState(false);
   const [userVote, setUserVote] = useState<string | null>(null);
@@ -23,12 +29,59 @@ export default function DebateDetailPage() {
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   const debateId = params.id as string;
-  const userId = 'user123'; // TODO: Get from Farcaster context
+  const userId = address || 'user123'; // Use wallet address if connected
+
+  // Read blockchain debate data
+  const { data: blockchainData, refetch: refetchBlockchain } = useReadContract({
+    address: CONTRACT_ADDRESSES.DebateContractV2 as `0x${string}`,
+    abi: DEBATE_CONTRACT_V2_ABI,
+    functionName: 'getDebate',
+    args: [BigInt(debateId)],
+    query: {
+      enabled: !!CONTRACT_ADDRESSES.DebateContractV2 && !!debateId,
+    },
+  });
+
+  // Check if user has voted on blockchain
+  const { data: hasVotedBlockchain } = useReadContract({
+    address: CONTRACT_ADDRESSES.DebateContractV2 as `0x${string}`,
+    abi: DEBATE_CONTRACT_V2_ABI,
+    functionName: 'hasUserVoted',
+    args: [BigInt(debateId), address as `0x${string}`],
+    query: {
+      enabled: !!CONTRACT_ADDRESSES.DebateContractV2 && !!debateId && !!address,
+    },
+  });
+
+  // Get user's vote data from blockchain
+  const { data: userVoteData } = useReadContract({
+    address: CONTRACT_ADDRESSES.DebateContractV2 as `0x${string}`,
+    abi: DEBATE_CONTRACT_V2_ABI,
+    functionName: 'getUserVote',
+    args: [BigInt(debateId), address as `0x${string}`],
+    query: {
+      enabled: !!CONTRACT_ADDRESSES.DebateContractV2 && !!debateId && !!address,
+    },
+  });
 
   useEffect(() => {
     fetchDebate();
     fetchChatMessages();
-  }, [debateId]); // eslint-disable-line react-hooks/exhaustive-deps
+    
+    // Update blockchain data when it changes
+    if (blockchainData) {
+      setBlockchainDebate(blockchainData);
+      setHasVoted(Boolean(hasVotedBlockchain));
+      
+      if (userVoteData && Array.isArray(userVoteData) && blockchainData && Array.isArray(blockchainData) && blockchainData.length > 3) {
+        const [stake, optionIndex] = userVoteData;
+        const options = blockchainData[3]; // options is at index 3 in the returned array
+        if (Array.isArray(options)) {
+          setUserVote(options[Number(optionIndex)]);
+        }
+      }
+    }
+  }, [debateId, blockchainData, hasVotedBlockchain, userVoteData]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (debate && debate.status === 'active') {
@@ -195,6 +248,12 @@ export default function DebateDetailPage() {
     }
   };
 
+  const handleStakeSuccess = () => {
+    // Refresh blockchain data after successful staking
+    refetchBlockchain();
+    setHasVoted(true);
+  };
+
   const scrollToBottom = () => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -287,6 +346,11 @@ export default function DebateDetailPage() {
         <div className={styles.votingSection}>
           <h3>Cast Your Vote</h3>
           
+          {/* Wallet Connection */}
+          <div className={styles.walletSection}>
+            <WalletConnection />
+          </div>
+          
           {isEnded ? (
             <div className={styles.votingEnded}>
               <p>Voting has ended for this debate.</p>
@@ -295,23 +359,41 @@ export default function DebateDetailPage() {
             <div className={styles.voted}>
               <p>✅ You have already voted!</p>
               {userVote && (
-                <p>Your vote: <strong>{userVote}</strong></p>
+                <p>Your vote: <strong>{String(userVote as any)}</strong></p>
+              )}
+              {(userVoteData as any) && Array.isArray(userVoteData) && userVoteData.length > 0 && (
+                <p>Your stake: <strong>{Number((userVoteData as any[])[0]) / 1e18} DEBATE</strong></p>
               )}
             </div>
           ) : (
-            <div className={styles.voteButtons}>
-              <button
-                className={`${styles.voteButton} ${styles.option1Button}`}
-                onClick={() => handleVote(debate.votingOptions.option1)}
-              >
-                {debate.votingOptions.option1}
-              </button>
-              <button
-                className={`${styles.voteButton} ${styles.option2Button}`}
-                onClick={() => handleVote(debate.votingOptions.option2)}
-              >
-                {debate.votingOptions.option2}
-              </button>
+            <div className={styles.voteOptions}>
+              {/* Traditional voting buttons */}
+              <div className={styles.voteButtons}>
+                <button
+                  className={`${styles.voteButton} ${styles.option1Button}`}
+                  onClick={() => handleVote(debate.votingOptions.option1)}
+                >
+                  {debate.votingOptions.option1}
+                </button>
+                <button
+                  className={`${styles.voteButton} ${styles.option2Button}`}
+                  onClick={() => handleVote(debate.votingOptions.option2)}
+                >
+                  {debate.votingOptions.option2}
+                </button>
+              </div>
+              
+              {/* Blockchain staking interface */}
+              {isConnected && CONTRACT_ADDRESSES.DebateContractV2 && (
+                <div className={styles.blockchainVoting}>
+                  <h4>💰 Stake USDC & Vote on Blockchain</h4>
+                  <StakingInterface 
+                    debateId={Number(debateId)}
+                    options={[debate.votingOptions.option1, debate.votingOptions.option2]}
+                    onStakeSuccess={handleStakeSuccess}
+                  />
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -319,7 +401,50 @@ export default function DebateDetailPage() {
         <div className={styles.resultsSection}>
           <h3>Current Results</h3>
           
-          <div className={styles.results}>
+          {/* Blockchain Results */}
+          {blockchainDebate && (
+            <div className={styles.blockchainResults}>
+              <h4>💰 Blockchain Stakes</h4>
+              <div className={styles.blockchainStats}>
+                <p>Total Staked: <strong>{Number(blockchainDebate.totalStaked) / 1e6} USDC</strong></p>
+                <p>Platform Fee: <strong>{Number(blockchainDebate.totalStaked) * 0.05 / 1e6} USDC</strong></p>
+                <p>Reward Pool: <strong>{(Number(blockchainDebate.totalStaked) * 0.95) / 1e6} USDC</strong></p>
+              </div>
+              
+              <div className={styles.results}>
+                {blockchainDebate.options.map((option: string, index: number) => (
+                  <div key={index} className={styles.resultItem}>
+                    <div className={styles.resultHeader}>
+                      <span className={styles.resultLabel}>{option}</span>
+                      <span className={styles.resultCount}>
+                        {Number(blockchainDebate.stakes[index]) / 1e6} USDC
+                      </span>
+                    </div>
+                    <div className={styles.progressBar}>
+                      <div 
+                        className={`${styles.progressFill} ${index === 0 ? styles.option1Progress : styles.option2Progress}`}
+                        style={{ 
+                          width: `${blockchainDebate.totalStaked > 0 
+                            ? (Number(blockchainDebate.stakes[index]) / Number(blockchainDebate.totalStaked)) * 100 
+                            : 0}%` 
+                        }}
+                      ></div>
+                    </div>
+                    <div className={styles.percentage}>
+                      {blockchainDebate.totalStaked > 0 
+                        ? ((Number(blockchainDebate.stakes[index]) / Number(blockchainDebate.totalStaked)) * 100).toFixed(1)
+                        : 0}%
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {/* Traditional Results */}
+          <div className={styles.traditionalResults}>
+            <h4>📊 Traditional Votes</h4>
+            <div className={styles.results}>
             <div className={styles.resultItem}>
               <div className={styles.resultHeader}>
                 <span className={styles.resultLabel}>{debate.votingOptions.option1}</span>
@@ -351,10 +476,11 @@ export default function DebateDetailPage() {
                 {getVotePercentage(debate.votes[debate.votingOptions.option2] as number || 0, totalVotes)}%
               </div>
             </div>
-          </div>
+            </div>
 
-          <div className={styles.totalVotes}>
-            Total votes: <strong>{totalVotes}</strong>
+            <div className={styles.totalVotes}>
+              Total votes: <strong>{totalVotes}</strong>
+            </div>
           </div>
         </div>
 

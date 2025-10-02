@@ -1,11 +1,14 @@
 "use client";
 import { useState, useEffect } from "react";
 import { Debate } from "../lib/types";
+import { WalletConnection } from "../components/WalletConnection";
+import { ContractTester } from "../components/ContractTester";
 import styles from "./page.module.css";
 
 export default function Home() {
   const [debates, setDebates] = useState<Debate[]>([]);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showContractTester, setShowContractTester] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -56,6 +59,19 @@ export default function Home() {
         <div className={styles.header}>
           <h1 className={styles.title}>🔥 DEBATE APP</h1>
           <p className={styles.subtitle}>Join debates, stake your opinion, win rewards</p>
+          
+          {/* Blockchain Integration */}
+          <div className={styles.blockchainSection}>
+            <WalletConnection />
+            <button 
+              onClick={() => setShowContractTester(!showContractTester)}
+              className={styles.testButton}
+            >
+              {showContractTester ? 'Hide' : 'Show'} Contract Tester
+            </button>
+          </div>
+          
+          {showContractTester && <ContractTester />}
           
           <div className={styles.headerActions}>
             <button 
