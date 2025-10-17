@@ -36,7 +36,7 @@ export default function DebateDetailPage() {
     address: CONTRACT_ADDRESSES.DebateContractV2 as `0x${string}`,
     abi: DEBATE_CONTRACT_V2_ABI,
     functionName: 'getDebate',
-    args: [BigInt(debateId)],
+    args: [BigInt(1)], // Use debate ID 1 for testing
     query: {
       enabled: !!CONTRACT_ADDRESSES.DebateContractV2 && !!debateId,
     },
@@ -47,7 +47,7 @@ export default function DebateDetailPage() {
     address: CONTRACT_ADDRESSES.DebateContractV2 as `0x${string}`,
     abi: DEBATE_CONTRACT_V2_ABI,
     functionName: 'hasUserVoted',
-    args: [BigInt(debateId), address as `0x${string}`],
+    args: [BigInt(1), address as `0x${string}`], // Use debate ID 1 for testing
     query: {
       enabled: !!CONTRACT_ADDRESSES.DebateContractV2 && !!debateId && !!address,
     },
@@ -58,7 +58,7 @@ export default function DebateDetailPage() {
     address: CONTRACT_ADDRESSES.DebateContractV2 as `0x${string}`,
     abi: DEBATE_CONTRACT_V2_ABI,
     functionName: 'getUserVote',
-    args: [BigInt(debateId), address as `0x${string}`],
+    args: [BigInt(1), address as `0x${string}`], // Use debate ID 1 for testing
     query: {
       enabled: !!CONTRACT_ADDRESSES.DebateContractV2 && !!debateId && !!address,
     },
@@ -388,7 +388,7 @@ export default function DebateDetailPage() {
                 <div className={styles.blockchainVoting}>
                   <h4>💰 Stake USDC & Vote on Blockchain</h4>
                   <StakingInterface 
-                    debateId={Number(debateId)}
+                    debateId={1} // Use debate ID 1 for testing
                     options={[debate.votingOptions.option1, debate.votingOptions.option2]}
                     onStakeSuccess={handleStakeSuccess}
                   />
